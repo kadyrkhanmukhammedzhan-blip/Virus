@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ПОЛНОЕ ЗАРАЖЕНИЕ</title>
+    <title>●</title>
     <style>
         * {
             margin: 0;
@@ -13,8 +13,6 @@
         
         body {
             background-color: #000;
-            color: #0f0;
-            font-family: 'Courier New', monospace;
             overflow: hidden;
             height: 100vh;
             cursor: none;
@@ -27,49 +25,7 @@
             width: 100%;
             height: 100%;
             z-index: -1;
-            opacity: 0.3;
-        }
-        
-        .status {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background-color: rgba(0, 20, 0, 0.8);
-            border: 2px solid #0f0;
-            border-radius: 5px;
-            padding: 15px;
-            z-index: 1000;
-            font-size: 1.2rem;
-            line-height: 1.5;
-            text-shadow: 0 0 10px #0f0;
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
-        }
-        
-        .warning {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 3rem;
-            text-align: center;
-            z-index: 1000;
-            text-shadow: 0 0 20px #f00;
-            color: #f00;
-            animation: warningPulse 1s infinite;
-            pointer-events: none;
-        }
-        
-        .title {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            font-size: 2rem;
-            text-shadow: 0 0 10px #0f0;
-            z-index: 1000;
-            background-color: rgba(0, 0, 0, 0.7);
-            padding: 10px;
-            border-radius: 5px;
-            border: 2px solid #0f0;
+            opacity: 0.4;
         }
         
         /* Эффекты вируса */
@@ -133,12 +89,6 @@
         }
         
         /* Анимации */
-        @keyframes warningPulse {
-            0% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
-            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
-            100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
-        }
-        
         @keyframes pulse {
             0% { box-shadow: inset 0 0 100px rgba(0, 255, 0, 0.5), 0 0 200px rgba(0, 255, 0, 0.8); }
             50% { box-shadow: inset 0 0 150px rgba(0, 255, 0, 0.7), 0 0 250px rgba(0, 255, 0, 1); }
@@ -171,12 +121,39 @@
         }
         
         @keyframes glitchEffect {
-            0% { transform: translate(0); }
-            20% { transform: translate(-2px, 2px); }
-            40% { transform: translate(-2px, -2px); }
-            60% { transform: translate(2px, 2px); }
-            80% { transform: translate(2px, -2px); }
-            100% { transform: translate(0); }
+            0% { transform: translate(0); filter: hue-rotate(0deg); }
+            20% { transform: translate(-2px, 2px); filter: hue-rotate(90deg); }
+            40% { transform: translate(-2px, -2px); filter: hue-rotate(180deg); }
+            60% { transform: translate(2px, 2px); filter: hue-rotate(270deg); }
+            80% { transform: translate(2px, -2px); filter: hue-rotate(360deg); }
+            100% { transform: translate(0); filter: hue-rotate(0deg); }
+        }
+        
+        .data-fragment {
+            position: fixed;
+            color: #0f0;
+            font-family: monospace;
+            pointer-events: none;
+            z-index: 6;
+            opacity: 0.7;
+            font-size: 16px;
+            text-shadow: 0 0 10px #0f0;
+        }
+        
+        .corrupted-line {
+            position: fixed;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #0f0, transparent);
+            pointer-events: none;
+            z-index: 7;
+            opacity: 0.5;
+            animation: scanline 3s linear infinite;
+        }
+        
+        @keyframes scanline {
+            0% { top: 0%; }
+            100% { top: 100%; }
         }
     </style>
 </head>
@@ -184,30 +161,11 @@
     <canvas class="matrix-bg" id="matrix-bg"></canvas>
     
     <div class="cursor" id="cursor"></div>
-    
-    <div class="title">
-        ПОЛНОЕ ЗАРАЖЕНИЕ
-    </div>
-    
-    <div class="status" id="status">
-        Червячки: <span id="worm-count">0</span><br>
-        Вирусы: <span id="virus-count">0</span><br>
-        Размер дыры: <span id="hole-size">200</span>px
-    </div>
-    
-    <div class="warning" id="warning">
-        ВИРУС АКТИВЕН
-    </div>
 
     <script>
         // Элементы DOM
         const matrixBg = document.getElementById('matrix-bg');
         const cursor = document.getElementById('cursor');
-        const wormCountElement = document.getElementById('worm-count');
-        const virusCountElement = document.getElementById('virus-count');
-        const holeSizeElement = document.getElementById('hole-size');
-        const statusElement = document.getElementById('status');
-        const warningElement = document.getElementById('warning');
         
         // Контекст для матричного фона
         const ctx = matrixBg.getContext('2d');
@@ -218,10 +176,11 @@
         let holes = [];
         let glitchLines = [];
         let infectedPixels = [];
+        let dataFragments = [];
+        let corruptedLines = [];
         let holeSize = 200;
         let mouseX = window.innerWidth / 2;
         let mouseY = window.innerHeight / 2;
-        let infectionLevel = 0;
         
         // Настройки canvas
         matrixBg.width = window.innerWidth;
@@ -229,8 +188,8 @@
         
         // Создание матричного фона
         function createMatrixBackground() {
-            const letters = "01アイウエオカキクケコサシスセソタチツテト";
-            const fontSize = 16;
+            const letters = "010011010101001100110101";
+            const fontSize = 18;
             const columns = matrixBg.width / fontSize;
             const drops = [];
             
@@ -239,23 +198,24 @@
             }
             
             function drawMatrix() {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
                 ctx.fillRect(0, 0, matrixBg.width, matrixBg.height);
                 
-                // Разные цвета для матрицы
-                const colors = ['#0f0', '#0c0', '#090', '#0f9'];
-                ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
-                ctx.font = `${fontSize}px 'Courier New'`;
+                // Случайный цвет для символов
+                const greenShades = ['#0f0', '#0c0', '#090', '#0f9', '#0f6'];
+                ctx.fillStyle = greenShades[Math.floor(Math.random() * greenShades.length)];
+                ctx.font = `bold ${fontSize}px monospace`;
                 
                 for(let i = 0; i < drops.length; i++) {
                     const text = letters[Math.floor(Math.random() * letters.length)];
                     ctx.fillText(text, i * fontSize, drops[i] * fontSize);
                     
-                    if(drops[i] * fontSize > matrixBg.height && Math.random() > 0.97) {
+                    // Случайное исчезновение и появление
+                    if(drops[i] * fontSize > matrixBg.height && Math.random() > 0.95) {
                         drops[i] = 0;
                     }
                     
-                    drops[i] += Math.random() * 2;
+                    drops[i] += Math.random() * 1.5 + 0.5;
                 }
             }
             
@@ -284,29 +244,26 @@
             worm.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
             
             // Случайная длина и толщина
-            const length = Math.random() * 200 + 100;
-            const thickness = Math.random() * 10 + 5;
+            const length = Math.random() * 250 + 150;
+            const thickness = Math.random() * 12 + 8;
             
             worm.style.width = `${length}px`;
             worm.style.height = `${thickness}px`;
             
             // Случайное направление и анимация
             const angle = Math.random() * Math.PI * 2;
-            const duration = Math.random() * 10 + 10;
+            const duration = Math.random() * 8 + 5;
             worm.style.transform = `rotate(${angle}rad)`;
             worm.style.animation = `wormMove ${duration}s infinite linear`;
             
             document.body.appendChild(worm);
-            
             worms.push(worm);
-            updateStats();
             
             // Автоматическое удаление через некоторое время и создание нового
             setTimeout(() => {
                 if (document.body.contains(worm)) {
                     document.body.removeChild(worm);
                     worms = worms.filter(w => w !== worm);
-                    updateStats();
                     createWorm(); // Создаем нового червячка
                 }
             }, 15000 + Math.random() * 10000);
@@ -325,16 +282,16 @@
             virus.style.top = `${y}px`;
             
             // Случайный размер
-            const size = Math.random() * 150 + 80;
+            const size = Math.random() * 200 + 100;
             virus.style.width = `${size}px`;
             virus.style.height = `${size}px`;
             
-            // Случайный цвет и форма
-            const hue = Math.floor(Math.random() * 60);
+            // Случайный цвет
+            const hue = Math.floor(Math.random() * 360);
             virus.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
             
             // Случайная форма
-            const shapes = ['50%', '30%', '10%', '0%'];
+            const shapes = ['50%', '30%', '10%', '0%', '40% 60%'];
             virus.style.borderRadius = shapes[Math.floor(Math.random() * shapes.length)];
             
             virus.style.opacity = Math.random() * 0.7 + 0.3;
@@ -345,14 +302,14 @@
             
             function pulseVirus() {
                 if (growing) {
-                    scale += 0.005;
-                    if (scale >= 1.5) growing = false;
+                    scale += 0.003;
+                    if (scale >= 1.8) growing = false;
                 } else {
-                    scale -= 0.005;
-                    if (scale <= 0.5) growing = true;
+                    scale -= 0.003;
+                    if (scale <= 0.3) growing = true;
                 }
                 
-                virus.style.transform = `scale(${scale}) rotate(${scale * 10}deg)`;
+                virus.style.transform = `scale(${scale}) rotate(${scale * 20}deg)`;
                 
                 if (document.body.contains(virus)) {
                     requestAnimationFrame(pulseVirus);
@@ -363,14 +320,12 @@
             
             document.body.appendChild(virus);
             viruses.push(virus);
-            updateStats();
             
             // Автоматическое удаление через некоторое время и создание нового
             setTimeout(() => {
                 if (document.body.contains(virus)) {
                     document.body.removeChild(virus);
                     viruses = viruses.filter(v => v !== virus);
-                    updateStats();
                     createVirus(); // Создаем новый вирус
                 }
             }, 8000 + Math.random() * 7000);
@@ -405,20 +360,20 @@
             line.className = 'glitch-line';
             
             const x = Math.random() * window.innerWidth;
-            const width = Math.random() * 5 + 1;
-            const height = Math.random() * 100 + 50;
+            const width = Math.random() * 8 + 2;
+            const height = Math.random() * 150 + 80;
             
             line.style.left = `${x}px`;
-            line.style.top = `-100px`;
+            line.style.top = `-150px`;
             line.style.width = `${width}px`;
             line.style.height = `${height}px`;
             
             // Случайный цвет
-            const colors = ['#0f0', '#f00', '#0ff'];
+            const colors = ['#0f0', '#f00', '#0ff', '#f0f', '#ff0'];
             line.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
             
             // Случайная скорость
-            const duration = Math.random() * 3 + 1;
+            const duration = Math.random() * 2.5 + 1;
             line.style.animation = `glitchMove ${duration}s infinite linear`;
             
             document.body.appendChild(line);
@@ -441,12 +396,15 @@
             
             const x = Math.random() * window.innerWidth;
             const y = Math.random() * window.innerHeight;
-            const size = Math.random() * 10 + 2;
+            const size = Math.random() * 15 + 5;
             
             pixel.style.left = `${x}px`;
             pixel.style.top = `${y}px`;
             pixel.style.width = `${size}px`;
             pixel.style.height = `${size}px`;
+            
+            // Случайная форма
+            pixel.style.borderRadius = Math.random() > 0.5 ? '50%' : '0%';
             
             // Случайная длительность анимации
             const duration = Math.random() * 4 + 1;
@@ -465,33 +423,90 @@
             }, 5000);
         }
         
-        // Обновление статистики
-        function updateStats() {
-            wormCountElement.textContent = worms.length;
-            virusCountElement.textContent = viruses.length;
-            holeSizeElement.textContent = Math.round(holeSize);
+        // Создание фрагментов данных (двоичный код)
+        function createDataFragment() {
+            const fragment = document.createElement('div');
+            fragment.className = 'data-fragment';
             
-            // Увеличиваем уровень заражения
-            infectionLevel = worms.length + viruses.length;
+            // Случайный двоичный код
+            const binaryStrings = [
+                "01001000 01000001 01000011 01001011", // HACK
+                "10110110 01101101 11011010 10110101", // Случайные данные
+                "11111111 00000000 11110000 00001111", // Шаблон
+                "01010101 00110011 00001111 11110000"  // Еще шаблон
+            ];
             
-            // Меняем цвет статуса при высоком уровне заражения
-            if (infectionLevel > 30) {
-                statusElement.style.borderColor = '#f00';
-                statusElement.style.boxShadow = '0 0 30px #f00';
-                statusElement.style.color = '#f00';
-            } else if (infectionLevel > 20) {
-                statusElement.style.borderColor = '#ff0';
-                statusElement.style.boxShadow = '0 0 25px #ff0';
-                statusElement.style.color = '#ff0';
+            fragment.textContent = binaryStrings[Math.floor(Math.random() * binaryStrings.length)];
+            
+            const x = Math.random() * window.innerWidth;
+            const y = Math.random() * window.innerHeight;
+            
+            fragment.style.left = `${x}px`;
+            fragment.style.top = `${y}px`;
+            
+            // Дрейф
+            let driftX = (Math.random() - 0.5) * 2;
+            let driftY = (Math.random() - 0.5) * 2;
+            
+            function driftFragment() {
+                x += driftX;
+                y += driftY;
+                
+                // Отскок от границ
+                if (x < 0 || x > window.innerWidth - 200) driftX = -driftX;
+                if (y < 0 || y > window.innerHeight - 50) driftY = -driftY;
+                
+                fragment.style.left = `${x}px`;
+                fragment.style.top = `${y}px`;
+                
+                // Мигание
+                fragment.style.opacity = 0.3 + Math.sin(Date.now() * 0.005) * 0.4;
+                
+                if (document.body.contains(fragment)) {
+                    requestAnimationFrame(driftFragment);
+                }
             }
             
-            // Меняем текст предупреждения
-            if (infectionLevel > 40) {
-                warningElement.textContent = 'КРИТИЧЕСКОЕ ЗАРАЖЕНИЕ';
-                warningElement.style.fontSize = '4rem';
-            } else if (infectionLevel > 20) {
-                warningElement.textContent = 'ВИРУС РАСПРОСТРАНЯЕТСЯ';
-            }
+            driftFragment();
+            
+            document.body.appendChild(fragment);
+            dataFragments.push(fragment);
+            
+            // Автоматическое удаление через некоторое время
+            setTimeout(() => {
+                if (document.body.contains(fragment)) {
+                    document.body.removeChild(fragment);
+                    dataFragments = dataFragments.filter(f => f !== fragment);
+                }
+            }, 10000 + Math.random() * 10000);
+        }
+        
+        // Создание коррумпированных линий (сканирующие линии)
+        function createCorruptedLine() {
+            const line = document.createElement('div');
+            line.className = 'corrupted-line';
+            
+            line.style.top = `${Math.random() * 100}%`;
+            
+            // Случайная толщина
+            const height = Math.random() * 3 + 1;
+            line.style.height = `${height}px`;
+            
+            // Случайная скорость
+            const duration = Math.random() * 5 + 3;
+            line.style.animation = `scanline ${duration}s linear infinite`;
+            
+            document.body.appendChild(line);
+            corruptedLines.push(line);
+            
+            // Автоматическое удаление и создание новой линии
+            setTimeout(() => {
+                if (document.body.contains(line)) {
+                    document.body.removeChild(line);
+                    corruptedLines = corruptedLines.filter(l => l !== line);
+                    createCorruptedLine();
+                }
+            }, duration * 1000);
         }
         
         // Функция полного заражения
@@ -503,34 +518,44 @@
             createHole();
             
             // Создаем много червячков
-            for (let i = 0; i < 15; i++) {
-                setTimeout(() => createWorm(), i * 300);
+            for (let i = 0; i < 20; i++) {
+                setTimeout(() => createWorm(), i * 200);
             }
             
             // Создаем много вирусов
-            for (let i = 0; i < 20; i++) {
-                setTimeout(() => createVirus(), i * 200);
+            for (let i = 0; i < 25; i++) {
+                setTimeout(() => createVirus(), i * 150);
             }
             
             // Создаем линии глитча
-            for (let i = 0; i < 10; i++) {
-                setTimeout(() => createGlitchLine(), i * 500);
+            for (let i = 0; i < 15; i++) {
+                setTimeout(() => createGlitchLine(), i * 300);
             }
             
             // Создаем зараженные пиксели
-            for (let i = 0; i < 30; i++) {
-                setTimeout(() => createInfectedPixel(), i * 300);
+            for (let i = 0; i < 40; i++) {
+                setTimeout(() => createInfectedPixel(), i * 200);
+            }
+            
+            // Создаем фрагменты данных
+            for (let i = 0; i < 10; i++) {
+                setTimeout(() => createDataFragment(), i * 800);
+            }
+            
+            // Создаем коррумпированные линии
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => createCorruptedLine(), i * 1000);
             }
             
             // Автоматическое добавление новых эффектов
             setInterval(() => {
-                if (Math.random() > 0.7) createWorm();
-                if (Math.random() > 0.5) createVirus();
-                if (Math.random() > 0.8) createGlitchLine();
-                if (Math.random() > 0.6) createInfectedPixel();
-            }, 2000);
-            
-            updateStats();
+                if (Math.random() > 0.6) createWorm();
+                if (Math.random() > 0.4) createVirus();
+                if (Math.random() > 0.7) createGlitchLine();
+                if (Math.random() > 0.5) createInfectedPixel();
+                if (Math.random() > 0.3) createDataFragment();
+                if (Math.random() > 0.2) createCorruptedLine();
+            }, 1500);
         }
         
         // Обработчики событий мыши
@@ -549,38 +574,38 @@
             }
             
             // Случайное создание эффектов при движении мыши
-            if (Math.random() > 0.95) createVirus();
-            if (Math.random() > 0.97) createInfectedPixel();
+            if (Math.random() > 0.93) createVirus();
+            if (Math.random() > 0.95) createInfectedPixel();
+            if (Math.random() > 0.98) createGlitchLine();
         });
         
         document.addEventListener('wheel', (e) => {
             // Изменяем размер дыры колесиком мыши
-            holeSize += e.deltaY > 0 ? -20 : 20;
+            holeSize += e.deltaY > 0 ? -25 : 25;
             holeSize = Math.max(50, Math.min(500, holeSize));
             
             createHole();
-            updateStats();
         });
         
         // Обработчик клика - усиливает заражение
         document.addEventListener('click', (e) => {
             // Создаем взрыв вирусов при клике
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < 8; i++) {
                 setTimeout(() => {
                     const virus = document.createElement('div');
                     virus.className = 'virus';
                     
-                    virus.style.left = `${e.clientX + (Math.random() - 0.5) * 200}px`;
-                    virus.style.top = `${e.clientY + (Math.random() - 0.5) * 200}px`;
+                    virus.style.left = `${e.clientX + (Math.random() - 0.5) * 300}px`;
+                    virus.style.top = `${e.clientY + (Math.random() - 0.5) * 300}px`;
                     
-                    const size = Math.random() * 80 + 40;
+                    const size = Math.random() * 100 + 60;
                     virus.style.width = `${size}px`;
                     virus.style.height = `${size}px`;
                     
                     const hue = Math.floor(Math.random() * 360);
                     virus.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
                     virus.style.borderRadius = '50%';
-                    virus.style.opacity = 0.7;
+                    virus.style.opacity = 0.8;
                     
                     document.body.appendChild(virus);
                     viruses.push(virus);
@@ -588,25 +613,58 @@
                     // Анимация взрыва
                     let scale = 0.1;
                     function explode() {
-                        scale += 0.1;
-                        virus.style.transform = `scale(${scale})`;
-                        virus.style.opacity = 1 - scale/10;
+                        scale += 0.15;
+                        virus.style.transform = `scale(${scale}) rotate(${scale * 30}deg)`;
+                        virus.style.opacity = 1 - scale/8;
                         
-                        if (scale < 5) {
+                        if (scale < 6) {
                             requestAnimationFrame(explode);
                         } else {
                             if (document.body.contains(virus)) {
                                 document.body.removeChild(virus);
                                 viruses = viruses.filter(v => v !== virus);
-                                updateStats();
                             }
                         }
                     }
                     
                     explode();
+                }, i * 80);
+            }
+            
+            // Создаем червячков от точки клика
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const worm = document.createElement('div');
+                    worm.className = 'worm';
                     
-                    updateStats();
-                }, i * 100);
+                    worm.style.left = `${e.clientX}px`;
+                    worm.style.top = `${e.clientY}px`;
+                    
+                    const hue = Math.floor(Math.random() * 120 + 60);
+                    worm.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
+                    
+                    const length = Math.random() * 200 + 100;
+                    const thickness = Math.random() * 10 + 5;
+                    
+                    worm.style.width = `${length}px`;
+                    worm.style.height = `${thickness}px`;
+                    
+                    const angle = Math.random() * Math.PI * 2;
+                    const duration = Math.random() * 8 + 5;
+                    worm.style.transform = `rotate(${angle}rad)`;
+                    worm.style.animation = `wormMove ${duration}s infinite linear`;
+                    
+                    document.body.appendChild(worm);
+                    worms.push(worm);
+                    
+                    // Автоматическое удаление через некоторое время
+                    setTimeout(() => {
+                        if (document.body.contains(worm)) {
+                            document.body.removeChild(worm);
+                            worms = worms.filter(w => w !== worm);
+                        }
+                    }, 12000);
+                }, i * 200);
             }
         });
         
@@ -614,25 +672,24 @@
         function init() {
             fullInfection();
             
-            // Меняем цвет предупреждения каждые 2 секунды
-            setInterval(() => {
-                const colors = ['#f00', '#0f0', '#ff0', '#0ff', '#f0f'];
-                warningElement.style.color = colors[Math.floor(Math.random() * colors.length)];
-            }, 2000);
-            
             // Случайное изменение размера дыры
             setInterval(() => {
-                if (Math.random() > 0.7) {
-                    holeSize += (Math.random() - 0.5) * 50;
+                if (Math.random() > 0.8) {
+                    holeSize += (Math.random() - 0.5) * 60;
                     holeSize = Math.max(100, Math.min(400, holeSize));
                     createHole();
-                    updateStats();
                 }
-            }, 3000);
+            }, 2000);
+            
+            // Случайное изменение цвета курсора
+            setInterval(() => {
+                const colors = ['#0f0', '#f00', '#0ff', '#ff0', '#f0f'];
+                cursor.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            }, 1000);
         }
         
         // Запуск при загрузке
         window.addEventListener('load', init);
     </script>
 </body>
-    </html>
+</html>
