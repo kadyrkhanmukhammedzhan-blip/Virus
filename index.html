@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вирусная симуляция: Червячки и дыра в экране</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: #000;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            height: 100vh;
+            cursor: none;
+        }
+        
+        #screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        #hole {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: 
+                inset 0 0 50px rgba(0, 255, 0, 0.3),
+                0 0 100px rgba(0, 255, 0, 0.5);
+            z-index: 2;
+            transition: width 0.3s, height 0.3s;
+        }
+        
+        .hole-border {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid #0f0;
+            box-shadow: 0 0 30px #0f0;
+            width: 100%;
+            height: 100%;
+            animation: pulse 2s infinite;
+        }
+        
+        .control-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 20, 0, 0.8);
+            border: 1px solid #0f0;
+            border-radius: 10px;
+            padding: 15px;
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 90%;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+        
+        button {
+            background-color: #000;
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background-color: #0f0;
+            color: #000;
+            box-shadow: 0 0 15px #0f0;
+        }
+        
+        .title {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 100;
+            text-shadow: 0 0 10px #0f0;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 1px solid #0f0;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            color: #8f8;
+            font-size: 1rem;
+        }
+        
+        .warning {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 50, 50, 0.2);
+            border: 1px solid #f00;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-align: center;
+            color: #f88;
+            z-index: 100;
+            max-width: 80%;
+        }
+        
+        .stats {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(0, 20, 0, 0.8);
+            border: 1px solid #0f0;
+            border-radius: 5px;
+            padding: 10px;
+            z-index: 100;
+            font-size: 0.9rem;
+        }
+        
+        .instructions {
+            position: fixed;
+            top: 150px;
+            left: 20px;
+            background-color: rgba(0, 20, 0, 0.8);
+            border: 1px solid #0f0;
+            border-radius: 5px;
+            padding: 15px;
+            z-index: 100;
+            max-width: 300px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 30px #0f0; }
+            50% { box-shadow: 0 0 50px #0f0, 0 0 70px #0f0; }
+            100% { box-shadow: 0 0 30px #0f0; }
+        }
+        
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+        
+        .glitch {
+            animation: glitch 0.3s infinite;
+        }
+        
+        @media (max-width: 768px) {
+            .control-panel {
+                bottom: 10px;
+                padding: 10px;
+            }
+            
+            button {
+                padding: 8px 12px;
+                font-size: 0.9rem;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .instructions {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="screen"></canvas>
+    <div id="hole">
+        <div class="hole-border"></div>
+    </div>
+    
+    <div class="title">
+        <h1>ВИРУСНАЯ СИМУЛЯЦИЯ</h1>
+        <div class="subtitle">Червячки + Вирус + Дыра в экране</div>
+    </div>
+    
+    <div class="warning">
+        ВНИМАНИЕ: Это симуляция вирусных эффектов. Экран не поврежден на самом деле.
+    </div>
+    
+    <div class="instructions">
+        <h3>Управление:</h3>
+        <p>• Двигайте мышью - дыра следует за курсором</p>
+        <p>• Колесико мыши - меняет размер дыры</p>
+        <p>• Клик - добавляет эффекты вируса</p>
+        <p>• Кнопки ниже управляют симуляцией</p>
+    </div>
+    
+    <div class="stats">
+        Червячки: <span id="worm-count">0</span><br>
+        Вирусы: <span id="virus-count">0</span><br>
+        Размер дыры: <span id="hole-size">100</span>px
+    </div>
+    
+    <div class="control-panel">
+        <button id="add-worms">
+            Добавить червячков
+        </button>
+        <button id="add-virus">
+            Заразить вирусом
+        </button>
+        <button id="glitch-effect">
+            Эффект глитча
+        </button>
+        <button id="clear-all">
+            Очистить экран
+        </button>
+        <button id="toggle-hole">
+            Скрыть дыру
+        </button>
+        <button id="full-infection">
+            Полное заражение
+        </button>
+    </div>
+
+    <script>
+        // Элементы DOM
+        const screen = document.getElementById('screen');
+        const hole = document.getElementById('hole');
+        const ctx = screen.getContext('2d');
+        const wormCountElement = document.getElementById('worm-count');
+        const virusCountElement = document.getElementById('virus-count');
+        const holeSizeElement = document.getElementById('hole-size');
+        
+        // Настройки canvas
+        screen.width = window.innerWidth;
+        screen.height = window.innerHeight;
+        
+        // Переменные состояния
+        let worms = [];
+        let viruses = [];
+        let glitchActive = false;
+        let holeVisible = true;
+        let holeSize = 100;
+        let mouseX = screen.width / 2;
+        let mouseY = screen.height / 2;
+        
+        // Настройки дыры
+        hole.style.width = `${holeSize}px`;
+        hole.style.height = `${holeSize}px`;
+        hole.style.left = `${mouseX - holeSize/2}px`;
+        hole.style.top = `${mouseY - holeSize/2}px`;
+        
+        // Класс червячка
+        class Worm {
+            constructor() {
+                this.x = Math.random() * screen.width;
+                this.y = Math.random() * screen.height;
+                this.length = Math.random() * 50 + 30;
+                this
